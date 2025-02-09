@@ -63,4 +63,19 @@ export class StellarService {
 
     return balance.balance
   }
+
+  async getDataValue (accountId: string, key: string): Promise<string | null> {
+    try {
+      const account = await this.server.loadAccount(accountId)
+      return account.data_attr[key] 
+        ? Buffer.from(account.data_attr[key], 'base64').toString()
+        : null
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(error, `Failed to get data value for account ${accountId} and key ${key}`)
+        throw new Error(`Stellar error: ${error.message}`)
+      }
+      throw error
+    }
+  }
 }

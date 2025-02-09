@@ -3,6 +3,7 @@ import { logger } from './utils/logger'
 import { VERSION } from './version'
 import { StellarService } from './services/stellar'
 import { CheckTokenInstruction } from './instructions/check-token'
+import { CheckTagInstruction } from './instructions/check-tag'
 
 const program = new Command()
 
@@ -28,7 +29,31 @@ program
       asset: options.token,
       minAmount: options.minAmount,
       issuer: options.issuer,
-      comparison: options.comparison
+      comparison: options.comparison as 'gte' | 'lte' | 'eq'
+    })
+
+    if (result.success) {
+      logger.info(result.message)
+    } else {
+      logger.error(result.message)
+      process.exit(1)
+    }
+  })
+
+program
+  .command('check-tag')
+  .description('Check mutual tags between two accounts')
+  .requiredOption('-a, --account <account>', 'First Stellar account ID')
+  .requiredOption('-k, --key <key>', 'Tag key to check')
+  .option('-p, --pair-key <pairKey>', 'Pair tag key to check on second account')
+  .action(async (options) => {
+    const stellar = new StellarService(true) // Use TESTNET
+    const instruction = new CheckTagInstruction(stellar)
+
+    const result = await instruction.execute({
+      account: options.account,
+      key: options.key,
+      pairKey: options.pairKey
     })
 
     if (result.success) {
