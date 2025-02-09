@@ -8,6 +8,15 @@ export interface TokenBalance {
   balance: string
 }
 
+export interface PaymentRecord {
+  asset_type: string
+  asset_code?: string
+  asset_issuer?: string
+  from: string
+  to: string
+  created_at: string
+}
+
 export class StellarService {
   private readonly server: StellarSdk.Horizon.Server
   private readonly network: string
@@ -73,6 +82,71 @@ export class StellarService {
     } catch (error) {
       if (error instanceof Error) {
         logger.error(error, `Failed to get data value for account ${accountId} and key ${key}`)
+        throw new Error(`Stellar error: ${error.message}`)
+      }
+      throw error
+    }
+  }
+
+  async getTransactions (accountId: string, since: Date): Promise<PaymentRecord[]> {
+    try {
+      const result: PaymentRecord[] = []
+      let lastCursor: string | undefined
+      let page = 1
+
+      logger.debug({ accountId, since }, 'Starting transaction search')
+
+      while (true) {
+        logger.debug({ page, lastCursor }, 'Loading transactions page')
+
+        const payments = await this.server
+          .payments()
+          .forAccount(accountId)
+          .limit(100)
+          .order('desc')
+          .cursor(lastCursor ?? 'now')
+          .call()
+
+        const records = payments.records
+          .filter(payment => {
+            const createdAt = new Date(payment.created_at)
+            return createdAt >= since && 'type' in payment && payment.type === 'payment'
+          })
+          .map(payment => {
+            const p = payment as any
+            return {
+              asset_type: p.asset_type,
+              asset_code: p.asset_code,
+              asset_issuer: p.asset_issuer,
+              from: p.from,
+              to: p.to,
+              created_at: p.created_at
+            }
+          })
+
+        result.push(...records)
+
+        logger.debug({
+          page,
+          total: result.length,
+          pageSize: records.length
+        }, 'Page loaded')
+
+        // Если нет следующей страницы или последняя транзакция старше since, останавливаемся
+        if (!payments.records.length || new Date(payments.records[payments.records.length - 1].created_at) < since) {
+          break
+        }
+
+        lastCursor = payments.records[payments.records.length - 1].paging_token
+        page++
+      }
+
+      logger.debug({ total: result.length }, 'Transaction search completed')
+
+      return result
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(error, `Failed to get transactions for account ${accountId}`)
         throw new Error(`Stellar error: ${error.message}`)
       }
       throw error

@@ -46,3 +46,32 @@ bun start check-tag -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST 
 # Проверить взаимные теги с разными ключами
 bun start check-tag -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -k friend -p buddy
 ```
+
+### check-tx
+
+Проверяет наличие транзакций с определенным токеном за указанный период. Можно проверить как входящие, так и исходящие транзакции, а также транзакции с определенным аккаунтом.
+
+#### Параметры
+
+- `-a, --account` - ID аккаунта в сети Stellar
+- `-t, --token` - Код токена (XLM для нативного токена)
+- `-s, --since` - Дата начала проверки в ISO формате
+- `-i, --issuer` - ID эмитента токена (не нужен для XLM)
+- `-d, --direction` - Направление транзакции (in - входящие, out - исходящие)
+- `-c, --counterparty` - Проверять транзакции только с этим аккаунтом
+
+#### Пример
+
+```bash
+# Проверить все транзакции с XLM за последний час
+bun start check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t XLM -s $(date -v-1H -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Проверить входящие транзакции с токеном
+bun start check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t TEST -i ISSUER_ID -s 2024-01-01T00:00:00Z -d in
+
+# Проверить исходящие транзакции с токеном
+bun start check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t TEST -i ISSUER_ID -s 2024-01-01T00:00:00Z -d out
+
+# Проверить транзакции с определенным аккаунтом
+bun start check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t XLM -s 2024-01-01T00:00:00Z -c GBXXX...
+```
