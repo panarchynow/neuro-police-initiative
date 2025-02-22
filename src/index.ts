@@ -8,6 +8,8 @@ import { CheckTxInstruction } from './instructions/check-tx'
 import { config } from 'dotenv'
 import { GristService } from './services/grist/service'
 import { MTLGrist } from './services/grist/types'
+import { ManagementOperative } from './operatives/telegram/management'
+import { UsersOperative } from './operatives/grist/users'
 
 // Загружаем переменные окружения
 config()
@@ -176,6 +178,34 @@ grist
       logger.info('Данные успешно обновлены')
     } catch (error) {
       logger.error('Ошибка:', error instanceof Error ? error.message : error)
+      process.exit(1)
+    }
+  })
+
+program
+  .command('management-members')
+  .description('Get members of Decentralized Management chat')
+  .action(ManagementOperative.cli)
+
+program
+  .command('users')
+  .description('Работа с пользователями')
+  .command('stellar-by-telegram')
+  .description('Получить Stellar адрес по Telegram юзернейму')
+  .argument('<username>', 'Telegram username')
+  .action(async (username) => {
+    try {
+      const operative = new UsersOperative()
+      const address = await operative.getStellarByTelegram(username)
+
+      if (address) {
+        logger.info({ address }, 'Stellar address found')
+      } else {
+        logger.error('User not found')
+        process.exit(1)
+      }
+    } catch (error) {
+      logger.error({ error }, 'Failed to get Stellar address')
       process.exit(1)
     }
   })

@@ -1,5 +1,75 @@
 # Neuro Police Initiative
 
+Набор инструментов для энфорсмента контрактов для волюнтаристских сообществ.
+
+## Установка
+
+```bash
+# Клонируем репозиторий
+git clone https://github.com/montelibero-org/neuro-police
+cd neuro-police
+
+# Устанавливаем зависимости
+bun install
+
+# Создаем .env файл и добавляем необходимые токены
+cp .env.example .env
+```
+
+## Использование
+
+### CLI
+
+```bash
+# Проверить баланс токена
+bun run npi check-token -a ACCOUNT -t TOKEN -m MIN_AMOUNT
+
+# Проверить теги
+bun run npi check-tag -a ACCOUNT -k KEY
+
+# Проверить транзакции
+bun run npi check-tx -a ACCOUNT -t TOKEN -s "2024-01-01"
+
+# Получить список участников Распределенного правления
+bun run npi management-members
+```
+
+### Программный интерфейс
+
+```typescript
+import { ManagementOperative } from '@/operatives/telegram/management'
+
+const operative = new ManagementOperative()
+const members = await operative.getMembers()
+```
+
+## Переменные окружения
+
+```bash
+# Stellar
+HORIZON_URL=https://horizon-testnet.stellar.org
+NETWORK_PASSPHRASE=Test SDF Network ; September 2015
+
+# Grist
+GRIST_TOKEN=your_grist_token
+
+# Telegram Members
+TELEGRAM_MEMBERS_TOKEN=your_telegram_token
+```
+
+## Разработка
+
+```bash
+# Запуск тестов
+bun test
+
+# Запуск линтера
+bun run lint
+
+# Сборка
+bun run build
+```
+
 ## Инструкции
 
 ### check-token
@@ -18,13 +88,13 @@
 
 ```bash
 # Проверить баланс XLM
-bun start check-token -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t XLM -m 100
+bun run npi check-token -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t XLM -m 100
 
 # Проверить баланс другого токена
-bun start check-token -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t TEST -m 100 -i ISSUER_ID
+bun run npi check-token -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t TEST -m 100 -i ISSUER_ID
 
 # Проверить точное значение
-bun start check-token -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t XLM -m 100 -c eq
+bun run npi check-token -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t XLM -m 100 -c eq
 ```
 
 ### check-tag
@@ -41,10 +111,10 @@ bun start check-token -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTES
 
 ```bash
 # Проверить взаимные теги с одинаковым ключом
-bun start check-tag -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -k friend
+bun run npi check-tag -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -k friend
 
 # Проверить взаимные теги с разными ключами
-bun start check-tag -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -k friend -p buddy
+bun run npi check-tag -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -k friend -p buddy
 ```
 
 ### check-tx
@@ -64,16 +134,16 @@ bun start check-tag -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST 
 
 ```bash
 # Проверить все транзакции с XLM за последний час
-bun start check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t XLM -s $(date -v-1H -u +"%Y-%m-%dT%H:%M:%SZ")
+bun run npi check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t XLM -s $(date -v-1H -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # Проверить входящие транзакции с токеном
-bun start check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t TEST -i ISSUER_ID -s 2024-01-01T00:00:00Z -d in
+bun run npi check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t TEST -i ISSUER_ID -s 2024-01-01T00:00:00Z -d in
 
 # Проверить исходящие транзакции с токеном
-bun start check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t TEST -i ISSUER_ID -s 2024-01-01T00:00:00Z -d out
+bun run npi check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t TEST -i ISSUER_ID -s 2024-01-01T00:00:00Z -d out
 
 # Проверить транзакции с определенным аккаунтом
-bun start check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t XLM -s 2024-01-01T00:00:00Z -c GBXXX...
+bun run npi check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t XLM -s 2024-01-01T00:00:00Z -c GBXXX...
 ```
 
 ## CLI
@@ -99,19 +169,19 @@ bun start check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -
 
 ```bash
 # Получить данные из таблицы
-bun start grist fetch -t USERS
+bun run npi grist fetch -t USERS
 
 # С сортировкой по полю Stellar
-bun start grist fetch -t USERS -s Stellar
+bun run npi grist fetch -t USERS -s Stellar
 
 # С фильтром по полю
-bun start grist fetch -t USERS -f Stellar -v GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST
+bun run npi grist fetch -t USERS -f Stellar -v GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST
 
 # С фильтром по нескольким значениям
-bun start grist fetch -t USERS -f Balance -v 100 200 300
+bun run npi grist fetch -t USERS -f Balance -v 100 200 300
 
 # С сортировкой и фильтром
-bun start grist fetch -t USERS -s Stellar -f Balance -v 100
+bun run npi grist fetch -t USERS -s Stellar -f Balance -v 100
 ```
 
 ##### put
@@ -127,7 +197,7 @@ bun start grist fetch -t USERS -s Stellar -f Balance -v 100
 
 ```bash
 # Обновить данные
-bun start grist put -t USERS -d '{"name": "test"}'
+bun run npi grist put -t USERS -d '{"name": "test"}'
 ```
 
 ##### patch
@@ -143,7 +213,7 @@ bun start grist put -t USERS -d '{"name": "test"}'
 
 ```bash
 # Частично обновить данные
-bun start grist patch -t USERS -d '{"name": "test"}'
+bun run npi grist patch -t USERS -d '{"name": "test"}'
 ```
 
 #### Настройка
@@ -157,3 +227,27 @@ GRIST_TOKEN=your_token_here
 #### Доступные таблицы
 
 - `USERS` - пользователи
+
+### users
+
+Работа с пользователями.
+
+#### Команды
+
+##### stellar-by-telegram
+
+Получает Stellar адрес пользователя по его Telegram юзернейму. Можно указывать юзернейм как с @, так и без.
+
+###### Параметры
+
+- `username` - Telegram username пользователя (с @ или без)
+
+###### Пример
+
+```bash
+# Получить Stellar адрес пользователя (с @)
+bun run npi users stellar-by-telegram @username
+
+# Получить Stellar адрес пользователя (без @)
+bun run npi users stellar-by-telegram username
+```
