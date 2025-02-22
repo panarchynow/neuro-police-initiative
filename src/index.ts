@@ -5,8 +5,15 @@ import { StellarService } from './services/stellar'
 import { CheckTokenInstruction } from './instructions/check-token'
 import { CheckTagInstruction } from './instructions/check-tag'
 import { CheckTxInstruction } from './instructions/check-tx'
+import { config } from 'dotenv'
+import { GristService } from './services/grist/service'
+import { MTLGrist } from './services/grist/types'
+
+// Загружаем переменные окружения
+config()
 
 const program = new Command()
+const gristService = new GristService()
 
 program
   .name('npi')
@@ -91,6 +98,84 @@ program
       logger.info(result.message)
     } else {
       logger.error(result.message)
+      process.exit(1)
+    }
+  })
+
+const grist = program
+  .command('grist')
+  .description('Работа с данными из Grist')
+
+grist
+  .command('fetch')
+  .description('Получить данные из таблицы Grist')
+  .requiredOption('-t, --table <table>', 'Имя таблицы из списка доступных')
+  .option('-s, --sort <field>', 'Поле для сортировки')
+  .option('-f, --filter <field>', 'Поле для фильтрации')
+  .option('-v, --value <values...>', 'Значения для фильтрации')
+  .action(async (options) => {
+    try {
+      const tableConfig = MTLGrist[options.table as keyof typeof MTLGrist]
+      if (!tableConfig) {
+        logger.error('Неизвестная таблица. Доступные таблицы:')
+        logger.error(Object.keys(MTLGrist).join('\n'))
+        process.exit(1)
+      }
+
+      const filter = options.filter && options.value
+        ? { [options.filter]: options.value }
+        : undefined
+
+      const data = await gristService.fetchData(tableConfig, options.sort, filter)
+      logger.info(JSON.stringify(data, null, 2))
+    } catch (error) {
+      logger.error('Ошибка:', error instanceof Error ? error.message : error)
+      process.exit(1)
+    }
+  })
+
+grist
+  .command('put')
+  .description('Обновить данные в таблице Grist')
+  .requiredOption('-t, --table <table>', 'Имя таблицы из списка доступных')
+  .requiredOption('-d, --data <data>', 'JSON данные для обновления')
+  .action(async (options) => {
+    try {
+      const tableConfig = MTLGrist[options.table as keyof typeof MTLGrist]
+      if (!tableConfig) {
+        logger.error('Неизвестная таблица. Доступные таблицы:')
+        logger.error(Object.keys(MTLGrist).join('\n'))
+        process.exit(1)
+      }
+
+      const jsonData = JSON.parse(options.data)
+      await gristService.putData(tableConfig, jsonData)
+      logger.info('Данные успешно обновлены')
+    } catch (error) {
+      logger.error('Ошибка:', error instanceof Error ? error.message : error)
+      process.exit(1)
+    }
+  })
+
+grist
+  .command('patch')
+  .description('Частично обновить данные в таблице Grist')
+  .requiredOption('-t, --table <table>', 'Имя таблицы из списка доступных')
+  .requiredOption('-d, --data <data>', 'JSON данные для обновления')
+  .action(async (options) => {
+    try {
+      const tableConfig = MTLGrist[options.table as keyof typeof MTLGrist]
+      if (!tableConfig) {
+        logger.error('Неизвестная таблица. Доступные таблицы:')
+        logger.error(Object.keys(MTLGrist).join('\n'))
+        process.exit(1)
+      }
+
+      const jsonData = JSON.parse(options.data)
+      await gristService.patchData(tableConfig, jsonData)
+      logger.info('Данные успешно обновлены')
+    } catch (error) {
+      logger.error('Ошибка:', error instanceof Error ? error.message : error)
       process.exit(1)
     }
   })

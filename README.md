@@ -75,3 +75,85 @@ bun start check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -
 # Проверить транзакции с определенным аккаунтом
 bun start check-tx -a GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST -t XLM -s 2024-01-01T00:00:00Z -c GBXXX...
 ```
+
+## CLI
+
+### grist
+
+Работа с данными из Grist.
+
+#### Команды
+
+##### fetch
+
+Получает данные из таблицы.
+
+###### Параметры
+
+- `-t, --table` - Имя таблицы из списка доступных (USERS)
+- `-s, --sort` - Поле для сортировки (опционально)
+- `-f, --filter` - Поле для фильтрации (опционально)
+- `-v, --value` - Значения для фильтрации, можно указать несколько через пробел (опционально)
+
+###### Пример
+
+```bash
+# Получить данные из таблицы
+bun start grist fetch -t USERS
+
+# С сортировкой по полю Stellar
+bun start grist fetch -t USERS -s Stellar
+
+# С фильтром по полю
+bun start grist fetch -t USERS -f Stellar -v GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST
+
+# С фильтром по нескольким значениям
+bun start grist fetch -t USERS -f Balance -v 100 200 300
+
+# С сортировкой и фильтром
+bun start grist fetch -t USERS -s Stellar -f Balance -v 100
+```
+
+##### put
+
+Обновляет данные в таблице.
+
+###### Параметры
+
+- `-t, --table` - Имя таблицы из списка доступных (USERS)
+- `-d, --data` - JSON данные для обновления
+
+###### Пример
+
+```bash
+# Обновить данные
+bun start grist put -t USERS -d '{"name": "test"}'
+```
+
+##### patch
+
+Частично обновляет данные в таблице.
+
+###### Параметры
+
+- `-t, --table` - Имя таблицы из списка доступных (USERS)
+- `-d, --data` - JSON данные для обновления
+
+###### Пример
+
+```bash
+# Частично обновить данные
+bun start grist patch -t USERS -d '{"name": "test"}'
+```
+
+#### Настройка
+
+Для работы нужно создать файл `.env` с токеном:
+
+```bash
+GRIST_TOKEN=your_token_here
+```
+
+#### Доступные таблицы
+
+- `USERS` - пользователи
