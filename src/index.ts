@@ -10,6 +10,7 @@ import { GristService } from './services/grist/service'
 import { MTLGrist } from './services/grist/types'
 import { ManagementOperative } from './operatives/telegram/management'
 import { UsersOperative } from './operatives/grist/users'
+import { DecentralizedManagementMembership } from './protocols/montelibero/management'
 
 // Загружаем переменные окружения
 config()
@@ -21,6 +22,13 @@ program
   .name('npi')
   .description('Neuro Police Initiative - Contract Enforcement Tools')
   .version(VERSION)
+  .option('-d, --debug', 'Enable debug logs')
+  .hook('preAction', (thisCommand) => {
+    if (thisCommand.opts().debug) {
+      logger.level = 'debug'
+      logger.debug('Debug logs enabled')
+    }
+  })
 
 program
   .command('check-token')
@@ -31,7 +39,7 @@ program
   .option('-i, --issuer <issuer>', 'Token issuer (not needed for XLM)')
   .option('-c, --comparison <comparison>', 'Comparison type: gte, lte, eq', 'gte')
   .action(async (options) => {
-    const stellar = new StellarService(true) // Use TESTNET
+    const stellar = new StellarService()
     const instruction = new CheckTokenInstruction(stellar)
 
     const result = await instruction.execute({
@@ -57,7 +65,7 @@ program
   .requiredOption('-k, --key <key>', 'Tag key to check')
   .option('-p, --pair-key <pairKey>', 'Pair tag key to check on second account')
   .action(async (options) => {
-    const stellar = new StellarService(true) // Use TESTNET
+    const stellar = new StellarService()
     const instruction = new CheckTagInstruction(stellar)
 
     const result = await instruction.execute({
@@ -84,7 +92,7 @@ program
   .option('-d, --direction <direction>', 'Transaction direction: in, out')
   .option('-c, --counterparty <counterparty>', 'Check transactions only with this account')
   .action(async (options) => {
-    const stellar = new StellarService(true) // Use TESTNET
+    const stellar = new StellarService()
     const instruction = new CheckTxInstruction(stellar)
 
     const result = await instruction.execute({
@@ -186,6 +194,15 @@ program
   .command('management-members')
   .description('Get members of Decentralized Management chat')
   .action(ManagementOperative.cli)
+
+const protocols = program
+  .command('protocols')
+  .description('Запуск протоколов')
+
+protocols
+  .command('management')
+  .description('Проверить основания участия в Распределенном правлении')
+  .action(DecentralizedManagementMembership.cli)
 
 const users = program
   .command('users')

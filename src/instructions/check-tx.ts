@@ -11,6 +11,11 @@ export interface CheckTxParams extends InstructionParams {
   counterparty?: string
 }
 
+interface TransactionDetails {
+  hash: string
+  created_at: string
+}
+
 export class CheckTxInstruction extends BaseInstruction {
   name = 'check-tx'
   description = 'Checks if account has specific token transaction'
@@ -33,6 +38,8 @@ export class CheckTxInstruction extends BaseInstruction {
 
     try {
       const transactions = await this.stellar.getTransactions(account, new Date(since))
+      let lastTransaction: TransactionDetails | undefined
+
       const found = transactions.some(tx => {
         const isAssetMatch = tx.asset_type === 'native'
           ? asset === 'XLM'
@@ -41,14 +48,27 @@ export class CheckTxInstruction extends BaseInstruction {
         if (!isAssetMatch) return false
 
         if (direction === 'in') {
-          return tx.to === account && (!counterparty || tx.from === counterparty)
+          if (tx.to === account && (!counterparty || tx.from === counterparty)) {
+            lastTransaction = { hash: tx.hash, created_at: tx.created_at }
+            return true
+          }
+          return false
         }
 
         if (direction === 'out') {
-          return tx.from === account && (!counterparty || tx.to === counterparty)
+          if (tx.from === account && (!counterparty || tx.to === counterparty)) {
+            lastTransaction = { hash: tx.hash, created_at: tx.created_at }
+            return true
+          }
+          return false
         }
 
-        return !counterparty || tx.from === counterparty || tx.to === counterparty
+        if (!counterparty || tx.from === counterparty || tx.to === counterparty) {
+          lastTransaction = { hash: tx.hash, created_at: tx.created_at }
+          return true
+        }
+
+        return false
       })
 
       logger.debug({
@@ -58,7 +78,8 @@ export class CheckTxInstruction extends BaseInstruction {
         direction,
         since,
         counterparty,
-        found
+        found,
+        lastTransaction
       }, 'Transaction check result')
 
       return {
@@ -72,7 +93,8 @@ export class CheckTxInstruction extends BaseInstruction {
           issuer,
           direction,
           since,
-          counterparty
+          counterparty,
+          lastTransaction
         }
       }
     } catch (error) {

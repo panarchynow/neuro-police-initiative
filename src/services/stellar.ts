@@ -15,13 +15,16 @@ export interface PaymentRecord {
   from: string
   to: string
   created_at: string
+  hash: string
+  amount: string
 }
 
 export class StellarService {
   private readonly server: StellarSdk.Horizon.Server
   private readonly network: string
 
-  constructor (isTestnet: boolean = true) {
+  constructor () {
+    const isTestnet = process.env.STELLAR_NETWORK !== 'mainnet'
     this.network = isTestnet ? StellarSdk.Networks.TESTNET : StellarSdk.Networks.PUBLIC
     const url = isTestnet
       ? 'https://horizon-testnet.stellar.org'
@@ -29,7 +32,7 @@ export class StellarService {
 
     this.server = new StellarSdk.Horizon.Server(url)
     StellarSdk.Config.setDefault()
-    logger.info(`Using Stellar ${this.network} network`)
+    logger.info(`Using Stellar ${isTestnet ? 'Test SDF Network ; September 2015' : 'Public Global Stellar Network ; September 2015'} network`)
   }
 
   async getAccountBalances (accountId: string): Promise<TokenBalance[]> {
@@ -88,6 +91,25 @@ export class StellarService {
     }
   }
 
+  async getAllData (accountId: string): Promise<Record<string, string>> {
+    try {
+      const account = await this.server.loadAccount(accountId)
+      const result: Record<string, string> = {}
+
+      for (const [key, value] of Object.entries(account.data_attr)) {
+        result[key] = Buffer.from(value, 'base64').toString()
+      }
+
+      return result
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(error, `Failed to get data for account ${accountId}`)
+        throw new Error(`Stellar error: ${error.message}`)
+      }
+      throw error
+    }
+  }
+
   async getTransactions (accountId: string, since: Date): Promise<PaymentRecord[]> {
     try {
       const result: PaymentRecord[] = []
@@ -120,7 +142,9 @@ export class StellarService {
               asset_issuer: p.asset_issuer,
               from: p.from,
               to: p.to,
-              created_at: p.created_at
+              created_at: p.created_at,
+              hash: p.transaction_hash,
+              amount: p.amount
             }
           })
 
@@ -151,5 +175,11 @@ export class StellarService {
       }
       throw error
     }
+  }
+
+  async sumPayments (transactions: PaymentRecord[]): Promise<string> {
+    return transactions
+      .reduce((sum, tx) => sum + Number(tx.amount), 0)
+      .toString()
   }
 }

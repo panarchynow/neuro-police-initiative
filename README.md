@@ -272,3 +272,35 @@ bun run npi users personal-token username
 # Получить информацию о токене по Stellar адресу
 bun run npi users personal-token GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST
 ```
+
+### Протоколы
+
+#### Распределенное правление
+
+Проверяет основания участия в чате Распределенного правления. Для каждого участника проверяется:
+1. Наличие Stellar аккаунта
+2. Наличие персонального токена
+3. Наличие тега эксперта ИЛИ отправка персонального токена на счет Ассоциации
+
+##### Пример
+
+```bash
+# Проверить основания участия в Распределенном правлении
+bun run npi protocols management
+```
+
+##### Результат
+
+Если все участники имеют основания:
+```
+✅ All members have valid rights
+```
+
+Если есть нарушения:
+```
+❌ Found violations:
+
+@username GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST:
+  - No expert tag found
+  - No token payments found in last year
+```
