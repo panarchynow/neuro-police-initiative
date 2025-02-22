@@ -251,3 +251,24 @@ bun run npi users stellar-by-telegram @username
 # Получить Stellar адрес пользователя (без @)
 bun run npi users stellar-by-telegram username
 ```
+
+##### personal-token
+
+Получает информацию о персональном токене пользователя по его Telegram юзернейму или Stellar адресу.
+
+###### Параметры
+
+- `identifier` - Telegram username (с @ или без) или Stellar адрес пользователя
+
+###### Пример
+
+```bash
+# Получить информацию о токене по Telegram (с @)
+bun run npi users personal-token @username
+
+# Получить информацию о токене по Telegram (без @)
+bun run npi users personal-token username
+
+# Получить информацию о токене по Stellar адресу
+bun run npi users personal-token GCXLHWVLGYSKPOWALVJ2AWLSU4FVE66FCE2QOD6HHCESJGFWQ3OHTEST
+```

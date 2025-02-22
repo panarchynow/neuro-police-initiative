@@ -187,9 +187,11 @@ program
   .description('Get members of Decentralized Management chat')
   .action(ManagementOperative.cli)
 
-program
+const users = program
   .command('users')
   .description('Работа с пользователями')
+
+users
   .command('stellar-by-telegram')
   .description('Получить Stellar адрес по Telegram юзернейму')
   .argument('<username>', 'Telegram username')
@@ -206,6 +208,27 @@ program
       }
     } catch (error) {
       logger.error({ error }, 'Failed to get Stellar address')
+      process.exit(1)
+    }
+  })
+
+users
+  .command('personal-token')
+  .description('Получить информацию о персональном токене пользователя')
+  .argument('<identifier>', 'Telegram username или Stellar адрес')
+  .action(async (identifier) => {
+    try {
+      const operative = new UsersOperative()
+      const token = await operative.getPersonalToken(identifier)
+
+      if (token) {
+        logger.info({ token }, 'Personal token found')
+      } else {
+        logger.error('Personal token not found')
+        process.exit(1)
+      }
+    } catch (error) {
+      logger.error({ error }, 'Failed to get personal token')
       process.exit(1)
     }
   })
