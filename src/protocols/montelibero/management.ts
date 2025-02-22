@@ -3,7 +3,7 @@ import { ManagementOperative } from '@/operatives/telegram/management'
 import { UsersOperative } from '@/operatives/grist/users'
 import { CheckTxInstruction } from '@/instructions/check-tx'
 import { CheckTagInstruction } from '@/instructions/check-tag'
-import { StellarService } from '@/services/stellar'
+import { StellarService, PaymentRecord } from '@/services/stellar'
 import { logger } from '@/utils/logger'
 
 interface Violation {
@@ -41,6 +41,7 @@ export class DecentralizedManagementMembership extends BaseProtocol {
   private readonly tokensPerMonth = 4
 
   private expertTags: Map<string, string> = new Map()
+  private transactions: PaymentRecord[] = []
 
   constructor () {
     super()
@@ -73,17 +74,21 @@ export class DecentralizedManagementMembership extends BaseProtocol {
     return Array.from(this.expertTags.values()).includes(account)
   }
 
+  private async loadTransactions (): Promise<void> {
+    const yearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
+    this.transactions = await this.stellar.getTransactions(this.associationAccount, yearAgo)
+    logger.debug({ transactionsCount: this.transactions.length }, 'Association transactions loaded')
+  }
+
   private async checkTokenPayments (account: string, token: { code: string, issuer: string }): Promise<{ 
     success: boolean
     amount?: string
     monthsCovered?: number
     lastTransaction?: { hash: string, created_at: string, from: string }
+    isPaymentFromOtherAccount?: boolean
   }> {
-    const yearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
-    const transactions = await this.stellar.getTransactions(account, yearAgo)
-
-    // Фильтруем транзакции с нужным токеном, теперь проверяем только to
-    const relevantTransactions = transactions
+    // Фильтруем входящие транзакции с нужным токеном
+    const relevantTransactions = this.transactions
       .filter(tx => 
         tx.asset_code === token.code &&
         tx.asset_issuer === token.issuer &&
@@ -112,13 +117,15 @@ export class DecentralizedManagementMembership extends BaseProtocol {
         hash: lastPayment.hash,
         created_at: lastPayment.created_at,
         from: lastPayment.from
-      }
+      },
+      isPaymentFromOtherAccount: lastPayment.from !== account
     }
   }
 
   async execute (): Promise<ProtocolResult> {
     try {
       await this.loadExpertTags()
+      await this.loadTransactions()
       const members = await this.management.getMembers()
       const violations: Violation[] = []
       const verifications: Verification[] = []
@@ -164,7 +171,7 @@ export class DecentralizedManagementMembership extends BaseProtocol {
 
         const paymentCheck = await this.checkTokenPayments(stellar, token)
 
-        if (!paymentCheck.success) {
+        if (!paymentCheck.success && !paymentCheck.isPaymentFromOtherAccount) {
           violations.push({
             username,
             stellar,
